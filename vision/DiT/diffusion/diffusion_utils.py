@@ -19,7 +19,7 @@ def normal_kl(mean1, logvar1, mean2, logvar2):
     return 0.5 * (
             -1.0
             + logvar2
-            + logvar1
+            - logvar1
             + ms.ops.exp(logvar1 - logvar2)
             + ((mean1 - mean2) ** 2) * ms.ops.exp(-logvar2)
     )
