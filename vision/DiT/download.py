@@ -72,6 +72,6 @@ def download_model(model_name):
 
 if __name__ == "__main__":
     # Download all DiT checkpoints
-    for model in pretrained_models:
-        download_model(model)
+    # for model in pretrained_models:
+    download_model('DiT-XL-2-256x256.pt')
     print('Done.')

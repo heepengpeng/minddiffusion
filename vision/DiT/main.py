@@ -26,7 +26,7 @@ model.set_train(False)
 # Labels to condition the model with:
 class_count = 1000
 l = list(range(class_count))
-n = 200
+n = 20
 class_labels_batch = [l[i:i + n] for i in range(0, len(l), n)]
 repeat_num = 48  # 50 * 1000 = 50K
 vae = AutoencoderKL.from_pretrained("stabilityai/sd-vae-ft-mse").to('cuda')
