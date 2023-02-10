@@ -1,16 +1,25 @@
+import random
+import string
 import time
 
 import mindspore as ms
-import numpy as np
-from mindspore import context
+import torch
+from diffusers import AutoencoderKL
+from mindspore.communication import init, get_rank, get_group_size
+from torchvision.utils import save_image
 
 from diffusion import create_diffusion
 from download import find_model
 from models import DiT_XL_2
 
-context.set_context(mode=ms.PYNATIVE_MODE)
-# context.set_context(device_target="CPU")
-context.set_context(device_target="GPU")
+# multi gpu
+init()
+device_num = get_group_size()
+rank_id = get_rank()
+ms.set_auto_parallel_context(device_num=device_num,
+                             parallel_mode='data_parallel',
+                             gradients_mean=True)
+
 num_sampling_steps = 250
 cfg_scale = 4.0
 # Load model:
@@ -26,10 +35,10 @@ model.set_train(False)
 # Labels to condition the model with:
 class_count = 1000
 l = list(range(class_count))
-n = 10
+n = 200
 class_labels_batch = [l[i:i + n] for i in range(0, len(l), n)]
 repeat_num = 50  # 50 * 1000 = 50K
-
+vae = AutoencoderKL.from_pretrained("stabilityai/sd-vae-ft-mse").to('cuda')
 for i in range(repeat_num):
     print("batch %d start" % i)
     for class_labels in class_labels_batch:
@@ -54,4 +63,10 @@ for i in range(repeat_num):
         )
         split = ms.ops.Split(axis=0, output_num=2)
         samples, _ = split(samples)  # Remove null class samples
-        np.save('data.npy', samples.asnumpy())
+        samples = torch.from_numpy(samples.asnumpy())
+        samples = vae.decode(samples / 0.18215).sample
+        save_dir = "sample/image"
+        for idx, sample in enumerate(samples):
+            save_image(sample, save_dir + "/sample%s.png" % (''.join(random.sample(string.ascii_letters, 8))), nrow=1,
+                       normalize=True,
+                       value_range=(-1, 1))
