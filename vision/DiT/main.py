@@ -28,7 +28,7 @@ class_count = 1000
 l = list(range(class_count))
 n = 200
 class_labels_batch = [l[i:i + n] for i in range(0, len(l), n)]
-repeat_num = 50  # 50 * 1000 = 50K
+repeat_num = 48  # 50 * 1000 = 50K
 vae = AutoencoderKL.from_pretrained("stabilityai/sd-vae-ft-mse").to('cuda')
 for i in range(repeat_num):
     print("batch %d start" % i)
