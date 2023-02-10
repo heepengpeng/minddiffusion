@@ -12,13 +12,13 @@ from diffusion import create_diffusion
 from download import find_model
 from models import DiT_XL_2
 
-# multi gpu
-init()
-device_num = get_group_size()
-rank_id = get_rank()
-ms.set_auto_parallel_context(device_num=device_num,
-                             parallel_mode='data_parallel',
-                             gradients_mean=True)
+# # multi gpu
+# init()
+# device_num = get_group_size()
+# rank_id = get_rank()
+# ms.set_auto_parallel_context(device_num=device_num,
+#                              parallel_mode='data_parallel',
+#                              gradients_mean=True)
 
 num_sampling_steps = 250
 cfg_scale = 4.0
