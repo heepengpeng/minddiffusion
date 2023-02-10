@@ -27,6 +27,16 @@ def find_model(model_name):
         return ms.load_checkpoint(model_name)
 
 
+def load_model(model_name):
+    """
+    Finds a pre-trained G.pt model, downloading it if necessary. Alternatively, loads a model from a local path.
+    """
+    if model_name in pretrained_models:
+        local_path = f'pretrained_models/{model_name}'
+        ms_ckpt_path = local_path.replace('.pt', '.ckpt')
+        return ms.load_checkpoint(ms_ckpt_path)
+
+
 def torch_to_mindspore(state_dict):
     ms_ckpt = []
     for k, v in state_dict.items():
