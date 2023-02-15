@@ -1,10 +1,12 @@
-import os.path
+import os
 import random
 import string
 import time
 
 import mindspore as ms
-import numpy as np
+import torch
+from diffusers import AutoencoderKL
+from torchvision.utils import save_image
 
 from diffusion import create_diffusion
 from download import load_model
@@ -17,10 +19,21 @@ image_size = 256
 assert image_size in [256, 512], "We only provide pre-trained models for 256x256 and 512x512 resolutions."
 latent_size = image_size // 8
 model = DiT_XL_2(input_size=latent_size)
-
+device = 'cpu'
 state_dict = load_model(f"DiT-XL-2-{image_size}x{image_size}.pt")
 ms.load_param_into_net(model, state_dict)
 model.set_train(False)
+
+# vae model
+
+vae = AutoencoderKL.from_pretrained("stabilityai/sd-vae-ft-mse").to(device)
+
+
+# util
+def mkdir_if_not_exist(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
 
 # Labels to condition the model with:
 class_count = 1000
@@ -51,8 +64,13 @@ for i in range(repeat_num):
             model.forward_with_cfg, z.shape, z, clip_denoised=False, model_kwargs=model_kwargs, progress=True
         )
         split = ms.ops.Split(axis=0, output_num=2)
-        samples, _ = split(samples)  # Remove null class samples        samples = vae.decode(samples / 0.18215).sample
-        save_dir = "sample/npdata/%d/" % i
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-        np.save(save_dir + '%s.npy' % (''.join(random.sample(string.ascii_letters, 8))), samples.asnumpy())
+        samples, _ = split(samples)
+        # Remove null class samples
+        samples = torch.from_numpy(samples.asnumpy()).to(device)
+        samples = vae.decode(samples / 0.18215).sample
+        save_dir = "sample/image/%d" % i
+        mkdir_if_not_exist(save_dir)
+        for sample in samples:
+            save_image(sample, save_dir + "/sample%s.png" % (''.join(random.sample(string.ascii_letters, 8))), nrow=1,
+                       normalize=True,
+                       value_range=(-1, 1))
